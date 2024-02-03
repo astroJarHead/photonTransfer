@@ -1,0 +1,46 @@
+ecl> cl < lincheck.cl
+
+
+Sat Feb  3 01:52:41 PM MST 2024
+
+
+Running script lincheck.cl
+
+I need to load the ccdred package.
+
+File ccdlist.list created.
+
+File object.list created.
+
+'/mnt/nofs/projects/solarSystemEphem/images/obstype.txt' -> './obstype.txt'
+File obstype.list created.
+
+File raw.signal.imstat.txt created.
+
+'/mnt/nofs/projects/solarSystemEphem/images/exptimes.txt' -> './exptimes.txt'
+File exptimes.txt created.
+
+'/mnt/nofs/projects/solarSystemEphem/images/utcobs.txt' -> './utcobs.txt'
+File utcobs.txt created.
+
+ 
+  Using ed to edit all lines in the raw.signal.txt file.
+
+  This will change 'fits[' -> 'fits [' 
+
+  as needed to separate columns in the file.
+
+  In the ed editor
+
+  File raw.signal.txt file imstat columns separated.
+
+
+
+Script lincheck.cl finished
+
+File raw.signal.txt ready for PTC analysis
+
+
+
+Sat Feb  3 01:53:17 PM MST 2024
+ecl> 

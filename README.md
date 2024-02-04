@@ -13,4 +13,6 @@ lincheck.cl = An IRAF Command Language (CL) script
 
 columnSep.sh = A shell script called by lincheck.cl
 
-plot_
+plot_ptc.pro = IDL code containing procedures to perform the PTC analysis. This is only a barebones beginning at this stage. 
+
+output-lincheck.txt = Output captured from running lincheck.cl on Community IRAF 2.17.1 on some example data. 

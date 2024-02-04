@@ -6,3 +6,11 @@ For learning about PTC see:
 
  "Photon Transfer DN -> Lambda" by James R. Janesick published by the SPIE Vol. No. PM170 (2007) 
 ISBN 9780819467225
+
+Brief descriptions:
+
+lincheck.cl = An IRAF Command Language (CL) script
+
+columnSep.sh = A shell script called by lincheck.cl
+
+plot_

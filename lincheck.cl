@@ -61,10 +61,11 @@ else
    print ("I need to load the ccdred package.\n")
    noao
    imred
+   print "Loading ccdred package now ...\n"
    ccdred
 
-# Run the ccdlsit task as this is useful to have around
-# even if not needed. THis part requires the CD Database
+# Run the ccdlist task as this is useful to have around
+# even if not needed. This part requires the CD Database
 # mentioned above in "preliminaries".
 ccdlist ("g23d???.???.fits", ccdtype = "", names=no,
 long=no,ccdproc="", > "ccdlist.txt")

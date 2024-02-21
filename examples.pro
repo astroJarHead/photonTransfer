@@ -1610,7 +1610,7 @@ PRO ex_8_2
     LINESTYLE=4, /OVERPLOT)
   p9 = PLOT(xs, sigma_cor_4, NAME='$\sigma_{COR}(Q_{ff}=10^{5})$',THICK=2, $
     LINESTYLE=5, /OVERPLOT)
-  p10 = PLOT(xs, sigma_cor_5, 'g', NAME='$\sigma_{COR}(Q_{ff}=10^{6})$',THICK=2, $
+  p10 = PLOT(xs, sigma_cor_5, 'g', NAME='$\sigma_{COR}(Q_{ff}=10^{6})$',THICK=4, $
     LINESTYLE=1, /OVERPLOT)
     
   ; Some TEXT annotations
@@ -1625,3 +1625,213 @@ PRO ex_8_2
 
 
 END
+
+;****************************************************
+
+;**********
+; Chapter 11
+;**********
+
+;****************************************************
+
+PRO ex_11_1_sppl
+
+; Plot the source follower output read noise power spectrum as a function of 
+; electrical frequency at a fixed CDS sample-to-sample 
+; time given the following parameters:
+; 
+; W(f) = 15 nV/Hz^0.5     A_sf = 0.9 V/V
+; tau_D = 0.5 t_s         A_sn = 6 microV/electron
+; S_rts(f) = 0 
+; 
+; Assume f_c = [10^3, 10^4, 10^5, 10^6]
+; 
+; The CDS sample ot sample time is 
+
+  ; Step 1, begin with Eqn. 11.2, and plot the integrand. I want to understand 
+  ; what is inside that integral sign, and see if by eye it will converge. 
+  ; Initial attempts to evaluate the integral by hand have one term at least 
+  ; that does not converge.  
+
+  ; Create an array holding the values of the flicker noise corner 
+  ; frequencies f_c
+  
+  f_c = [1e3, 1e4, 1e5, 1e6]
+  
+  ; Set the CDS sample-to-sample time
+  
+  ; t_s = 1e-5 ; a low read noise t_s
+  t_s = 9e-6 ; a high read noise t_s
+  
+  
+  ; Create an array holding the electrical frequencies 
+  ; from 1 Hz to 1 GHz and use these to plot the integrand 
+  ; of Equation 11.2.
+  ; Increment by a large number as not every value is needed. 
+  ; E.g. 2e9/5 = 2e8 elements to get to 1 GHz by every 5 Hz.
+  
+  f = FINDGEN(1e6, START=1, INCREMENT=1000)
+  
+  ; Set the W(f)^2 value
+  
+  W_f_sqrd = (15e-9)^2
+  
+  ; The integrand is the CDS transfer function H_cds
+  
+  ; H_cds = [1.0d, 1.0d, 1.0d, 1.0d]
+  
+  ; H_cds = integrand(f_c[0],f,t_s)
+  H_cds = integrand(f_c[1],f,t_s)
+  ; H_cds = integrand(f_c[2],f,t_s)
+  ; H_cds = integrand(f_c[3],f,t_s)
+  
+  ; First source follower noise power spectrum
+  
+  ; S_det1 = W_f_sqrd*H_cds
+    S_det2 = W_f_sqrd*H_cds
+  ; S_det3 = W_f_sqrd*H_cds
+  ; S_det4 = W_f_sqrd*H_cds
+  
+;  pl_sp1 = PLOT(f,S_det1, XLOG=1, YLOG=1, TITLE='$S_{SF}$ Noise Power Sectrum #1', $
+;               XTITLE='f (Hz)', YTITLE = '$S_{DET} (V^{2}/Hz$)', $ 
+;               FONT_SIZE=12, FONT_STYLE='Bold', FONT_NAME='Times', $
+;               XTHICK=2, YTHICK=2, XRANGE=[100,10e9])
+  pl_sp2 = PLOT(f,S_det2, XLOG=1, YLOG=1, TITLE='$S_{SF}$ Noise Power Sectrum #5', $
+               XTITLE='f (Hz)', YTITLE = '$S_{DET} (V^{2}/Hz$)', $
+               FONT_SIZE=12, FONT_STYLE='Bold', FONT_NAME='Times', $
+               XTHICK=2, YTHICK=2, XRANGE=[100,10e9], YRANGE=[1e-35,1e-10])
+;  pl_sp3 = PLOT(f,S_det3, XLOG=1, YLOG=1, TITLE='$S_{SF}$ Noise Power Sectrum #3', $
+;               XTITLE='f (Hz)', YTITLE = '$S_{DET} (V^{2}/Hz$)', $
+;               FONT_SIZE=12, FONT_STYLE='Bold', FONT_NAME='Times', $
+;               XTHICK=2, YTHICK=2, XRANGE=[100,10e9])
+;  pl_sp4 = PLOT(f,S_det4, XLOG=1, YLOG=1, TITLE='$S_{SF}$ Noise Power Sectrum #4', $
+;               XTITLE='f (Hz)', YTITLE = '$S_{DET} (V^{2}/Hz$)', $
+;               FONT_SIZE=12, FONT_STYLE='Bold', FONT_NAME='Times', $
+;               XTHICK=2, YTHICK=2, XRANGE=[100,10e9])
+               
+               
+  ; Overplot an analytical test point I calculated by hand
+  
+  ;test_f = [900.0,900.0]
+  ;test_S_det = [1.52e-18,1.52e-18]
+  
+  ;pl_test = PLOT(test_f, test_S_det,'gs',SYM_FILLED=1, $ 
+  ;              NAME='Manual test point',/OVERPLOT)
+                
+  ; Add the legend
+  
+  ;leg = LEGEND(TARGET=[pl_test],POSITION=[1.6e5,1e-22],/DATA)
+  
+  ; Overplot some textual information
+  
+  t_f_c = TEXT(1000,1e-25,'$f_c = 1 \times 10^{4}$ (Hz)',/DATA,FONT_SIZE=10)
+  t_t_s = TEXT(1000,1e-26,'$t_s = 9 \times 10^{-6}$ (s)',/DATA,FONT_SIZE=10)
+  t_W_f = TEXT(1000,1e-27,'$W_f = 15 nV/Hz^{1/2}$',/DATA,FONT_SIZE=10)
+  
+END
+
+;****************************************************
+
+FUNCTION integrand, f_c, f, t_s
+  
+  ; A function to evaluate the integrand of Equation 11.2 of 
+  ; Janesick "Photon Transfer DN -> Lambda" for Example 11.1
+   
+  ; First coefficient A
+  a_coeff = (1.0 + f_c/f)
+  
+  ; Numerator of B coefficient
+  num_b = (2.0 - 2.0*cos(2*!pi*f*t_s))
+  
+  ; Denominator of B coefficient
+  denom_b = 1.0 + (!pi*f*t_s)^2
+  
+  ; Second coefficient B
+  b_coeff = num_b/denom_b
+  
+  ; Return the value of the integrand
+  
+  RETURN, a_coeff*b_coeff
+
+END 
+
+;****************************************************
+
+PRO ex_11_1_pow
+
+; Procedure to numerically evaluate the integral in Eqn. 11.2
+; of Janesick "Photon Transfer DN -> Lambda"at a fixed 
+; single sample-to-sample CDS time t_s using Simpson's 
+; rule.
+;
+; I am doing this to check:
+; 1)  My geometric evaluation of plot 11_1_sp_1
+; 2)  Use this to checlk what I get for a readnoise 
+;     in electrons at a t_s = 1e-5 against Janesick's
+;     Figure 11.1 which is just less than 1 electron. 
+; 
+; USES:
+; 
+; FUNCTION INTEG
+; 
+;   A modified version of the Function INTEGRAND for this 
+;   procedure's use. 
+; 
+  
+  ; Set the limits of integration over the frequencies f
+  lowLim = 1e8    ; Hz
+  uprLim = 1e9         ; Hz
+
+  ; Set the maximum steps for the integration to use. Default is 20 
+  ; but I may change these to test the effect of step changes. 
+  
+  ;maxSteps = 4
+  
+  print,' '
+  print,'**********'
+  print,' Numerically integrating now.'
+  print,'**********\n'
+  
+  the_numIntegral = QSIMP('integ',lowLim,uprLim,/DOUBLE)
+
+  print,' '
+  print,'**********'
+  print,' The Source Follower noise power = '+STRTRIM(STRING(the_numIntegral),1)+' V$ˆ{2}$'
+  print,'**********\n'
+   
+END
+
+;****************************************************
+
+FUNCTION integ, f
+
+  ; A function to numerically integrate the integral of 
+  ; Equation 11.2 of Janesick "Photon Transfer DN -> Lambda" 
+  ; within PRO 11_1_pow
+
+  ; set Correlated double sampling sample time t_s
+  ; flicker corner frequency and white noise W(f)
+   
+  t_s = 1e-5           ; sec
+  W_f_sqrd = (15e-9)^2 ; Voltsˆ2/Hz
+  f_c = 1000.0d        ; Hz
+
+  ; First coefficient A
+  a_coeff = (1.0 + f_c/f)
+
+  ; Numerator of B coefficient
+  num_b = (2.0 - 2.0*cos(2*!pi*f*t_s))
+
+  ; Denominator of B coefficient
+  denom_b = 1.0 + (!pi*f*t_s)^2
+
+  ; Second coefficient B
+  b_coeff = num_b/denom_b
+
+  ; Return the value of the integrand
+
+  RETURN, W_f_sqrd*a_coeff*b_coeff
+
+END
+
+;****************************************************

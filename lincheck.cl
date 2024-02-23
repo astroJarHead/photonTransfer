@@ -8,7 +8,12 @@
 
 # REQUIRES:
 #   1) Script calls a Bash shell columnSep.sh and expects this script
-#   to be in the same sirectory as lincheck.cl
+#   to be in the same directory as lincheck.cl
+#     a) These scripts are in the solarSytemEphem/images/ directory
+#     and calling 
+#             "cl> cl < lincheck.cl" 
+#     from within the individual /g??d??? directories will get the 
+#     process to work. 
 #
 #   2) The CCD Database in IRAF is setup. Do you need help?
 #   Bob Zavala can help with this, or check the IRAF Community
@@ -17,10 +22,8 @@
 
 # RUNS ON:
 #   Runs on Community IRAF V2.17.1 with a run time on a NOFS
-#   VM of 36 seconds for 348 Princeton Sophia 4096 x 4096
+#   VM of 10 minutes for ~260 Princeton Sophia 4096 x 4096
 #   CCD images.
-#
-#   Tested running within the directory where the PTC images reside. 
 
 # INPUT
 #   1) The images in a single directory in the usual NOFS naming
@@ -61,11 +64,10 @@ else
    print ("I need to load the ccdred package.\n")
    noao
    imred
-   print "Loading ccdred package now ...\n"
    ccdred
 
-# Run the ccdlist task as this is useful to have around
-# even if not needed. This part requires the CD Database
+# Run the ccdlsit task as this is useful to have around
+# even if not needed. THis part requires the CD Database
 # mentioned above in "preliminaries".
 ccdlist ("g23d???.???.fits", ccdtype = "", names=no,
 long=no,ccdproc="", > "ccdlist.txt")
@@ -92,12 +94,45 @@ hselect ("g23d???.???.fits",
 
 print "File obstype.list created.\n"
 
-# Get the image statistice required for the PTC analysis.
+# Make a list of all the g??.d???.???.fits filenames to use 
+# as an input @file list as needed
+
+!ls g??d???.???.fits > allImages.list
+
+print "List of all fits filenames allImages.list created.\n"
+
+# Use ZEROCOMBINE to create a master bias image for this date
+
+print "Using zerocombine to create the master bias image."
+print "This may take a few minutes for > 125 bias images.\n"
+
+zerocombine ("g??d???.???.fits",
+output="Zero.fits", combine="median", reject="minmax", ccdtype="zero",
+process=no, delete=no, clobber=no, scale="none", statsec="", nlow=0, nhigh=1,
+nkeep=1, mclip=yes, lsigma=3., hsigma=3., rdnoise="0.", gain="1.",
+snoise="0.", pclip=-0.5, blank=0.)
+
+# Use IMARITH to subtract the Zero.fits image from all images to remove 
+# the overscan offset level and the bias structure
+
+print "\n"
+print "Subtracting the master bias Zero.fits from all images"
+print "using imarith.\n"
+
+imarith ("@allImages.list",
+"-", "Zero.fits", "@allImages.list", title="", divzero=0., hparams="",
+pixtype="", calctype="", verbose=no, noact=no)
+
+# Get the image statistics required for the PTC analysis.
 # The region is chosen for the Sophia CCD. A different
 # camera is likely to have a different region.
 ### In future I should change this so the region is an argument.
 ### or maybe a camera and a lookup table is provided for
 ### different cameras. 
+
+print "Calling imstat. This will take about 30-ish seconds"
+print "depending on the number of images.\n"
+
 imstat ("g23d???.???.fits[900:3200,1200:3300]",
 fields="image,npix,mean,midpt,stddev,min,max", lower=INDEF, upper=INDEF,
 nclip=0, lsigma=3., usigma=3., binwidth=0.1, format=yes, cache=no,
@@ -132,7 +167,8 @@ print "File utcobs.txt created.\n"
 # Call the Shell script that uses the tried and true ed editor
 # to add one needed whitespace so we get the columns we want
 # that will be read in for the subsequent analysis.
-!./columnSep.sh
+# Note that the cl needs the '!' to escape the call to the shell.
+!../columnSep.sh
 
 # Miller time. 
 print "\n"
@@ -141,7 +177,7 @@ print "File raw.signal.txt ready for PTC analysis\n"
 print "\n"
 
 # Again pass the system date and time so the eyeball runtime estimate may
-# be made. If you really want a more precise estiamte to be made, feel
+# be made. If you really want a more precise estimate to be made, feel
 # free to improve upon this flawless piece of code :) 
 date
 

@@ -8,6 +8,8 @@
   ;
   ; Based on Chapters 1-8 and 11 of 
   ;       "Photon Transfer DN -> Lambda" by James R. Janesick
+  ;       Publ: SPIE (Aug 2007) 
+  ;       ISBN: 9780819467225
   ; 
   ; Using measured data of the signal in DN from a digital scientific 
   ; camera analyse the performance of the camera. Plots of the 
@@ -19,27 +21,37 @@
   ; Read noise  :         DN 
   ; Sensitivity (gain):   electrons per DN
   ; Dark current :        electrons per second
-  ; Fixed Pattern Noise : dimensionless 
-  ;      Quality factor
-  ; Check linearity, identify sources of non-linearity
+  ; Fixed Pattern Noise 
+  ;      Quality factor : dimensionless 
+  ; This process may also be used to      
+  ; check linearity, identify sources of non-linearity
   ;      
   ; CAMERA(S) EVALUATED:
   ; 
-  ; As of 08 Mar 2024 the #### Princeton Instruments (PI) Sophia
-  ; 4k 4096B CCD serial # # performance is analysed by 
+  ; As of 08 Mar 2024 the NOFS Princeton Instruments (PI) Sophia
+  ; 4k 4096B CCD serial # 12548718 performance is analysed by 
   ; this code.
   ; 
   ; RESULT VERIFICATION:
   ; 
   ; Table below shows results for linearity data obtained 
-  ; on the # with the Sophia camera on # (UT date ####). 
-  ; Camera set to -60 degrees C and 
-  ; light levels provided by flat field lamps (set to X V) 
-  ; and V filter. 
+  ; on the 61 inch with the Sophia camera. Camera set to -60 
+  ; degrees C and light levels provided by flat field lamps  
+  ; (set to 30.0 V) and V filter. 
   ;
   ; Dark data were taken on multiple nights and results analysed in 
-  ;   
-  ;   images/dark-dtc 
+  ; /mnt/nofs/projects/solarSystemEphem/images/dark-dtc for the 
+  ; data in the following nine (9) files:
+  ; 
+  ; g23d313.darkData.sav
+  ; g23d314.darkData.sav
+  ; g23d320.darkData.sav
+  ; g23d346.darkData.sav
+  ; g24d057.darkData.sav
+  ; g24d058.darkData.sav
+  ; g24d059.darkData.sav
+  ; g24d060.darkData.sav
+  ; g24d061.darkData.sav
   ; 
   ;               PI specification              PTC result
   ;               ----------------              ----------
@@ -52,12 +64,12 @@
   ; Teledyne e2v dark current figure of merit D_m (nanoAmp/cm^2 at 300K)
   ; predicted using documentation A1A-765136 Version 8, August, 2018
   ; = 1.8 nA/cm^2 and measured at 173K and "... some variation may 
-  ; be seen between devies" (pg. 2 of documentation).
+  ; be seen between devices" (pg. 2 of documentation).
   ;   
   ;   Dark Transfer Curve (DTC) measured D_m: 1.177 nA/cm^2
   ; 
-  ; Stability of flat field lamps on #:
-  ;     10.0 second exposures in V lamps at X V did show occasional
+  ; Stability of flat field lamps on g23d314:
+  ;     10.0 second exposures in V lamps at 30.0V did show occasional
   ;     signal drops of 4%. Evaluation of linearity and sources of 
   ;     any non-linearity requires a stable laboratory environment. 
   ;     Data taken prior to fully reading chapters in Janesick and 
@@ -95,16 +107,16 @@
   ; image and subtract this AND THEN get the image statistics.  
   ;                      
   ; The code to perform the statistics is a separate script and may be 
-  ; a user preference. There is also some Zero image analysis needed, 
-  ; which is a separate task and depends on the presence/absence of an 
-  ; overscan region.
+  ; a user preference or subject to device specifics. There is also some Zero 
+  ; image analysis needed, which is a separate task and depends on the 
+  ; presence/absence of an overscan region.
   ; 
   ; CODE RUNNING STEPS:
   ; 
   ; Assuming the ASCII file described above is present in a directory 
-  ; containing one night of data
+  ; containing one night of data for example:
   ; 
-  ;         somePath/images/g##d###/
+  ;         ~/images/g##d###/
   ;         
   ;   1) Run plot_ptc: Select the raw.signal.txt file. Results will 
   ;   be plotted to the screen. If darks were taken do_darks will 
@@ -113,7 +125,7 @@
   ;   2) If you will analyse many nights of dark data together copy 
   ;   the *.darkData.sav file to:
   ;   
-  ;         somePath/images/dark-dtc/ 
+  ;         ../dark-dtc/ 
   ;         
   ;   or a suitable named directory.
   ;   
@@ -121,8 +133,8 @@
   ;   containing directory is performed with do_dtc. Results again 
   ;   plotted to the screen and plots amy be saved. 
   ;   
-  ;   4) Finish PTC analysis and linearity analysis in a single 
-  ;   night directory with linear_ptc procedure. 
+  ;   4) Finish PTC analysis and linearity analysis in a with 
+  ;   completed linearity ptc procedure. 
   ;   
   ; CODE STILL TO BE WRITTEN:
   ; 
@@ -145,24 +157,19 @@
 
 PRO ptc
 
-  ; The PTC procedure so the COMMON block can be made. Eventually 
-  ; I want to create a PTC 'object' and do all this by inheritance
-  ; in an object oriented manner. 
-  
-  ; The user needs to COMPILE this part, calling ptc or running 
-  ; ptc at the command .
+  ; The PTC procedure so the COMMON block can be made. 
   
   COMMON SHARED,imagesDir,rawFilter,oneImstatLine
 
   ; The path specificaiton under which the individual image date
   ; directories are stored
-  imagesDir = '/images/'
+  imagesDir = '/mnt/nofs/projects/solarSystemEphem/images/'
   ; The filter to use in the DIALOG_PICKFILE to locate the 
   ; selections for the raw signal data in DN
   rawFilter = 'raw*.txt'
 
-  ; Create the onme line structure to hold the imstat data for 
-  ; PTC analysis. As this is needed it may be rpelicated the 
+  ; Create the one line structure to hold the imstat data for 
+  ; PTC analysis. As this is needed it may be replicated the 
   ; required number of times to accomodate the size required.
   ; ULONG = unsigned LONG integer used as those values are positive.
   
@@ -213,6 +220,10 @@ PRO plot_ptc
   
   yearDay = STRMID(statData.FILENAME[0],0,7)
   
+  ; Set the camera used
+  
+  the_camera = 'PI Sophia'
+  ; the_camera = 'Marana-4BV11
   ; set up the PTC plot dummy indices
   
   xs = DINDGEN(400000, START=1.0d)
@@ -221,7 +232,7 @@ PRO plot_ptc
   ; If darks were taken a linearity test might be possible. Let's see.
   
   domeFlats = WHERE(statData.OBSTYPE EQ 'Dome_Flat', domeFlatCount)
-   
+    
   IF domeFlatCount GT 1 THEN BEGIN 
     
     ; If this is a short exposure time day the short exposures need 
@@ -287,7 +298,7 @@ PRO plot_ptc
     p1 = PLOT(xs, ys, XLOG=1, YLOG=1, XRANGE=[x_min_p1,1e6], YRANGE=[1,3*MAX(statdata.sigma)], $
       XTITLE='Signal (DN)', YTITLE='NOISE (DN)', FONT_SIZE=12, $
       FONT_STYLE='Bold', FONT_NAME='Times', $
-      Title = yearDay+' PTC curve for PI Sophia CCD Camera', $
+      Title = yearDay+' PTC curve for '+the_camera+' Camera', $
       XTHICK=2, YTHICK=2, /NODATA)
    
     ; Begin plotting the raw signal and noise 
@@ -380,7 +391,11 @@ PRO plot_ptc
                sigma:statdata.sigma[the_darks],exptime:statdata.exptime[the_darks],$ 
                utcobs:statdata.utcobs[the_darks],obstype:statdata.obstype[the_darks]}
              
-    do_darks,darkData
+    print,' '
+    print,' Calling do_darks for the DTC analysis for this night.'
+    print,' '
+              
+    do_darks,darkData,the_camera
     
   ENDIF
 
@@ -390,10 +405,10 @@ END
 
 ;******************************
 
-PRO do_darks,darkData
+PRO do_darks,darkData,the_camera
 
-  ; Procedure to perform analysis of dark frames using a 
-  ; Dark Transfer Curve (DTC) per Chapter 11 of Janesick 
+  ; Procedure to perform analysis of dark frames for a single 
+  ; night using a Dark Transfer Curve (DTC) per Chapter 11 of Janesick 
   ; ¨Photon Transfer DN -> Lambda"
   
   ; RELATED:
@@ -439,8 +454,8 @@ PRO do_darks,darkData
     YRANGE=[1,maxYrange], $
     XTITLE='Signal (DN)', YTITLE='NOISE (DN)', FONT_SIZE=12, $
     FONT_STYLE='Bold', FONT_NAME='Times', $
-    Title = yearDay+' DTC curve for PI Sophia CCD Camera', $
-    XTHICK=2, YTHICK=2,NAME='$\sigma_{D_SHOT}$')
+    Title = yearDay+' DTC curve for '+the_camera+' Camera', $
+    XTHICK=2, YTHICK=2,NAME='$\sigma_{SHOT}$')
     
   p2 = PLOT(darkData.median,darkData.sigma,'2D',NAME='Dark (DN)',$ 
             SYM_FILLED=0,SYM_THICK=2,/OVERPLOT)
@@ -450,7 +465,7 @@ PRO do_darks,darkData
 ;  p4 = PLOT(darkData.median,dk_nobias,'2D',NAME='Dark - Bias (DN)',SYM_FILLED=1, $
 ;    XTITLE='Signal (DN)', YTITLE='NOISE (DN)', FONT_SIZE=12, $
 ;    FONT_STYLE='Bold', FONT_NAME='Times', $
-;    Title = yearDay+' Linear DTC curve for PI Sophia CCD Camera', $
+;    Title = yearDay+' Linear DTC curve for '+the_camera+' Camera', $
 ;    XTHICK=2, YTHICK=2)
 
   ; Add a legend
@@ -466,7 +481,7 @@ PRO do_darks,darkData
   ENDELSE
     
   ; Assuming Equation 11.18 sigma_D_FPN = D*D_n holds use the 
-  ; entire set of dark data for a nighto estiamte the percentage factor 
+  ; entire set of dark data for a nighto estimate the percentage factor 
   ; D_n the Dark Current Quality Factor
   
   ; Use the MOMENT function to get a MEAN and VARIANCE of the dark 
@@ -537,7 +552,7 @@ PRO do_dtc
   COMMON SHARED,imagesDir
 
   ; In here I will plot the readnoise signal and sigma in DN determined on 
-  ; # from 200 bias frames using:
+  ; g23d319 from 200 bias frames using:
   ; biases=WHERE(statdata.obstype EQ 'BIAS')
   ; rd_noise_signal = MEAN(statdata.MEDIAN[biases])
   ; rd_noise_dn = MEAN(statdata.SIGMA[biases])
@@ -649,7 +664,7 @@ PRO do_dtc
   ; Set a reasonable maximum for the Y axis range
   maxYrange = 1.33*MAX(allDarkData.sigma)
   
-  p1 = PLOT(xs, ys_pois,'--', XLOG=1, YLOG=1, XRANGE=[0.1,maxXrange], $
+  p1 = PLOT(small_xs, ys_pois,'-', XLOG=1, YLOG=1, XRANGE=[0.1,maxXrange], $
     YRANGE=[1,maxYrange], $
     XTITLE='Signal (DN)', YTITLE='NOISE (DN)', FONT_SIZE=12, $
     FONT_STYLE='Bold', FONT_NAME='Times', $
@@ -673,7 +688,7 @@ PRO do_dtc
   
   DCQF_arr = allDarkData.SIGMA[goodSignal]/allDarkData.MEDIAN[goodSignal]
   
-  ; Estiamte the DCQF and the statistics using the MOMENT function
+  ; Estimate the DCQF and the statistics using the MOMENT function
   
   DCQF = MOMENT(DCQF_arr)
   
@@ -720,7 +735,7 @@ PRO do_dtc
   
   ; Linear fit for the dark rate against time for exposure times 
   ; greater than 200 seconds. These are well and scatter increases
-  ; below that exposure time
+  ; below that exposure time.
   
   times_to_fit = WHERE(allDarkData.exptime GE 200.0)
   
@@ -731,7 +746,7 @@ PRO do_dtc
   
   ; Now to calculate the camera Dark figure of merit in nano Amperes cm^(-2)
   ; Right now this is the Sophia camera, remind the user and press on.
-  msg_text = 'Parameters will be set for the Sophia CCD Dark Figure of Merit'
+  msg_text = 'Parameters (temp, pixel area) will be set for the Sophia CCD Dark Figure of Merit'
   df_msg = DIALOG_MESSAGE(msg_text,/INFORMATION,TITLE='D_F MESSAGE',/CENTER)
   DELVAR,df_msg
 
@@ -786,6 +801,8 @@ PRO do_dtc
   ; Add a legend
 
   leg_dk = LEGEND(TARGET=[plDk,plDk2], POSITION=[50,9000],/DATA)
+
+  ; stop
 
 END
 
@@ -900,9 +917,9 @@ COMMON SHARED,imagesDir,rawFilter,oneImstatLine
  
     ; To determine the sigma_(SHOT+READ) pairs of exposures at the same 
     ; light levels are needed. I have these at the low light level, shorter 
-    ; exposure times for #. At the longer exposures I do not as 
-    ; these were single exposures. An approximation on # is possible 
-    ; for images ????314 and ????316 as the exposure times were 150.0
+    ; exposure times for g23d314. At the longer exposures I do not as 
+    ; these were single exposures. An approximation on g23d314 is possible 
+    ; for images g23d314 and g23d316 as the exposure times were 150.0
     ; and 160.0 seconds 6.3% different in exposure times. This was made into 
     ; the image test-FPN-diff.fits with the statistice recorded to:
     ; test-FPN-diff.imstat.txt.
